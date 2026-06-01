@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main  # Change this to 'master' if your main branch is called master
+      - main  # Change this to 'master' if your branch is named master
 
 jobs:
   build:
@@ -18,16 +18,28 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
-        cache: 'gradle'
+        # Removed the gradle cache setting to prevent the matching error
 
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: |
+        if [ -f ./gradlew ]; then
+          chmod +x ./gradlew
+        elif [ -f ./*/gradlew ]; then
+          chmod +x ./*/gradlew
+        fi
 
     - name: Build with Gradle
-      run: ./gradlew assembleDebug
+      run: |
+        if [ -f ./gradlew ]; then
+          ./gradlew assembleDebug
+        else
+          cd * && ./gradlew assembleDebug
+        fi
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: doc-vault-app
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: "**/build/outputs/apk/debug/app-debug.apk"
+
+
